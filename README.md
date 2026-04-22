@@ -69,15 +69,9 @@ flutter pub get
 flutter run
 ```
 
----
 
-## 📚 Resources
 
-* https://docs.flutter.dev/get-started/learn-flutter
-* https://docs.flutter.dev/get-started/codelab
-* https://docs.flutter.dev/reference/learning-resources
 
----
 
 ## 📌 Notes
 
