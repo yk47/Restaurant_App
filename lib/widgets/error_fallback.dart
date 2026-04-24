@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-class ErrorFallbackWidget extends StatelessWidget {
-  const ErrorFallbackWidget({
+class ErrorView extends StatelessWidget {
+  const ErrorView({
     super.key,
     required this.message,
     required this.onRetry,
-    this.title = 'Something went wrong',
+    this.title,
   });
 
-  final String title;
+  final String? title;
   final String message;
   final VoidCallback onRetry;
 
@@ -17,47 +17,43 @@ class ErrorFallbackWidget extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Card(
-            clipBehavior: Clip.antiAlias,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Icon(
-                    Icons.cloud_off_outlined,
-                    size: 56,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    message,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 20),
-                  Semantics(
-                    button: true,
-                    label: 'Retry loading content',
-                    child: ElevatedButton.icon(
-                      onPressed: onRetry,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
-                    ),
-                  ),
-                ],
+      child: Card(
+        margin: const EdgeInsets.all(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 50,
+                color: theme.colorScheme.error,
               ),
-            ),
+
+              const SizedBox(height: 12),
+
+              Text(
+                title ?? "Oops! Something went wrong",
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium,
+              ),
+
+              const SizedBox(height: 8),
+
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium,
+              ),
+
+              const SizedBox(height: 18),
+
+              ElevatedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text("Try again"),
+              ),
+            ],
           ),
         ),
       ),

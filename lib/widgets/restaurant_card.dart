@@ -14,7 +14,7 @@ class RestaurantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final t = Theme.of(context);
 
     return Card(
       elevation: 1,
@@ -25,55 +25,63 @@ class RestaurantCard extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
+            children: [
               Hero(
                 tag: restaurant.heroTag,
                 child: _RestaurantImage(imageUrl: restaurant.imageUrl),
               ),
-              const SizedBox(width: 12),
+
+              const SizedBox(width: 10),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
+                  children: [
+                    // name
                     Text(
                       restaurant.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium?.copyWith(
+                      style: t.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    if (restaurant.subtitle.isNotEmpty) ...<Widget>[
-                      const SizedBox(height: 4),
-                      Text(
-                        restaurant.subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w600,
+
+                    // subtitle (if any)
+                    if (restaurant.subtitle.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Text(
+                          restaurant.subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: t.textTheme.bodySmall?.copyWith(
+                            color: t.colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ],
-                    if (restaurant.description.isNotEmpty) ...<Widget>[
-                      const SizedBox(height: 8),
-                      Text(
-                        restaurant.description,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium,
+
+                    // description
+                    if (restaurant.description.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          restaurant.description,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: t.textTheme.bodyMedium,
+                        ),
                       ),
-                    ],
-                    const SizedBox(height: 12),
+
+                    const SizedBox(height: 10),
+
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: Tooltip(
-                        message: 'Open ${restaurant.name}',
-                        child: FilledButton.tonalIcon(
-                          onPressed: onTap,
-                          icon: const Icon(Icons.arrow_forward_rounded),
-                          label: const Text('Details'),
-                        ),
+                      child: FilledButton.tonalIcon(
+                        onPressed: onTap,
+                        icon: const Icon(Icons.arrow_forward_rounded),
+                        label: const Text('Details'),
                       ),
                     ),
                   ],
@@ -94,26 +102,30 @@ class _RestaurantImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final placeholder = Container(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      alignment: Alignment.center,
-      child: Icon(
-        Icons.restaurant_menu_outlined,
-        color: Theme.of(context).colorScheme.primary,
-      ),
-    );
+    final theme = Theme.of(context);
+
+    Widget fallback() {
+      return Container(
+        color: theme.colorScheme.surfaceContainerHighest,
+        alignment: Alignment.center,
+        child: Icon(
+          Icons.restaurant_menu_outlined,
+          color: theme.colorScheme.primary,
+        ),
+      );
+    }
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       child: SizedBox(
-        width: 88,
-        height: 88,
+        width: 86,
+        height: 86,
         child: imageUrl.isEmpty
-            ? placeholder
+            ? fallback()
             : Image.network(
                 imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => placeholder,
+                errorBuilder: (_, __, ___) => fallback(),
               ),
       ),
     );

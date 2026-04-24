@@ -20,10 +20,11 @@ class RestaurantApiClient {
     final payload = await _requestJson(
       method: 'POST',
       uri: config.searchUri(query: query, page: page, perPage: perPage),
-      body: <String, dynamic>{'categoryId': ''},
+      body: {'categoryId': ''},
     );
 
     final items = _extractList(payload);
+
     return items
         .whereType<Map<String, dynamic>>()
         .map(Restaurant.fromJson)
@@ -49,18 +50,21 @@ class RestaurantApiClient {
   }) async {
     try {
       final request = await _httpClient.openUrl(method, uri);
+
       request.headers.contentType = ContentType.json;
       request.headers.set('Accept', 'application/json');
       request.headers.set('Accept-Charset', 'UTF-8');
+
       request.headers.set(
         'User-Agent',
         config.headers['User-Agent'] ?? 'Mozilla/5.0',
       );
+
       request.headers.set('auth', config.headers['auth'] ?? '');
       request.headers.set('sessiontoken', config.headers['sessiontoken'] ?? '');
 
       if (method == 'POST') {
-        request.add(utf8.encode(jsonEncode(body ?? <String, dynamic>{})));
+        request.add(utf8.encode(jsonEncode(body ?? {})));
       }
 
       final response = await request.close();
@@ -75,7 +79,7 @@ class RestaurantApiClient {
       }
 
       if (responseBody.trim().isEmpty) {
-        return <String, dynamic>{};
+        return {};
       }
 
       return jsonDecode(responseBody);
@@ -96,7 +100,7 @@ class RestaurantApiClient {
     }
 
     if (payload is Map<String, dynamic>) {
-      final candidates = <dynamic>[
+      final candidates = [
         payload['data'],
         payload['result'],
         payload['items'],
@@ -107,8 +111,9 @@ class RestaurantApiClient {
         if (candidate is List<dynamic>) {
           return candidate;
         }
+
         if (candidate is Map<String, dynamic>) {
-          final nestedCandidates = <dynamic>[
+          final nestedCandidates = [
             candidate['items'],
             candidate['restaurants'],
             candidate['data'],
@@ -124,35 +129,35 @@ class RestaurantApiClient {
       }
     }
 
-    return <dynamic>[];
+    return [];
   }
 
   Map<String, dynamic> _extractMap(dynamic payload) {
     if (payload is Map<String, dynamic>) {
       final data = payload['data'];
-      if (data is Map<String, dynamic>) {
-        return data;
-      }
+      if (data is Map<String, dynamic>) return data;
+
       final restaurant = payload['restaurant'];
-      if (restaurant is Map<String, dynamic>) {
-        return restaurant;
-      }
+      if (restaurant is Map<String, dynamic>) return restaurant;
+
       return payload;
     }
 
-    return <String, dynamic>{};
+    return {};
   }
 
   String? _extractErrorMessage(String body) {
     try {
       final decoded = jsonDecode(body);
+
       if (decoded is Map<String, dynamic>) {
-        final candidates = <dynamic>[
+        final candidates = [
           decoded['message'],
           decoded['error'],
           decoded['title'],
           decoded['detail'],
         ];
+
         for (final candidate in candidates) {
           if (candidate is String && candidate.trim().isNotEmpty) {
             return candidate;
@@ -162,6 +167,7 @@ class RestaurantApiClient {
     } catch (_) {
       return null;
     }
+
     return null;
   }
 }

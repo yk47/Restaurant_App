@@ -51,7 +51,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
           }
 
           if (snapshot.hasError) {
-            return ErrorFallbackWidget(
+            return ErrorView(
               title: 'Could not load restaurant',
               message: ExceptionHandler.handle(
                 snapshot.error ?? 'Unknown error',
@@ -422,7 +422,7 @@ class _HeroTopSection extends StatelessWidget {
                   ? Image.network(
                       imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _heroPlaceholder(),
+                      errorBuilder: (_, _, _) => _heroPlaceholder(),
                     )
                   : _heroPlaceholder(),
             ),
@@ -478,7 +478,7 @@ class _HeroTopSection extends StatelessWidget {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: resolvedGallery.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 6),
+                  separatorBuilder: (_, _) => const SizedBox(width: 6),
                   itemBuilder: (context, index) {
                     final url = resolvedGallery[index];
                     return ClipRRect(
@@ -494,7 +494,7 @@ class _HeroTopSection extends StatelessWidget {
                               : Image.network(
                                   url,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
+                                  errorBuilder: (_, _, _) =>
                                       _thumbPlaceholder(),
                                 ),
                         ),
@@ -733,7 +733,7 @@ class _MenuCard extends StatelessWidget {
                 ? Image.network(
                     item.imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _placeholder(),
+                    errorBuilder: (_, _, _) => _placeholder(),
                   )
                 : _placeholder(),
           ),

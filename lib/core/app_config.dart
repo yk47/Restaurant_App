@@ -29,20 +29,25 @@ class AppConfig {
     required int page,
     required int perPage,
   }) {
-    return Uri.parse('$baseUri/api/v2/restaurant/search').replace(
-      queryParameters: <String, String>{
+    final uri = Uri.parse('$baseUri/api/v2/restaurant/search');
+
+    return uri.replace(
+      queryParameters: {
         'lang': lang,
         'storeCode': storeCode,
         'page': page.toString(),
         'perPage': perPage.toString(),
         'q': query,
+
         'categoryId': '',
         'macroCategoryId': '',
         'nearBy': '',
         'sortBy': '1',
         'homeManagementId': '',
+
         'latlng': latLng,
         'userId': userId,
+
         'calories': '',
         'carbs': '',
         'proteins': '',
@@ -53,8 +58,10 @@ class AppConfig {
   }
 
   Uri detailUri({required String restaurantId}) {
-    return Uri.parse('$baseUri/api/v2/restaurant/details').replace(
-      queryParameters: <String, String>{
+    final uri = Uri.parse('$baseUri/api/v2/restaurant/details');
+
+    return uri.replace(
+      queryParameters: {
         'lang': lang,
         'storeCode': storeCode,
         'currencyCode': currencyCode,
@@ -65,25 +72,30 @@ class AppConfig {
     );
   }
 
-  Map<String, String> get headers => <String, String>{
+  Map<String, String> get headers => {
     'Accept': 'application/json',
     'Accept-Charset': 'UTF-8',
     'Content-Type': 'application/json',
+
     'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0',
+
     'auth': authToken,
     'sessiontoken': sessionToken,
   };
 }
 
 class AppConfigScope extends InheritedWidget {
-  const AppConfigScope({super.key, required this.config, required super.child});
+  const AppConfigScope({super.key, required this.config, required Widget child})
+    : super(child: child);
 
   final AppConfig config;
 
   static AppConfig of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppConfigScope>();
-    assert(scope != null, 'AppConfigScope not found in widget tree.');
+
+    assert(scope != null, 'AppConfigScope not found in widget tree');
+
     return scope!.config;
   }
 

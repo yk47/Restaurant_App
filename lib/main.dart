@@ -6,7 +6,7 @@ import 'core/app_config.dart';
 import 'screens/restaurant_list_screen.dart';
 
 void main() {
-  final appConfig = const AppConfig();
+  const appConfig = AppConfig();
   final apiClient = RestaurantApiClient(appConfig);
 
   Get.put<AppConfig>(appConfig, permanent: true);
@@ -31,6 +31,8 @@ class _RestaurantAppState extends State<RestaurantApp> {
   @override
   void initState() {
     super.initState();
+
+    // ensure api client is available
     if (!Get.isRegistered<RestaurantApiClient>()) {
       Get.put<RestaurantApiClient>(
         widget.apiClient ?? RestaurantApiClient(_appConfig),
@@ -46,12 +48,14 @@ class _RestaurantAppState extends State<RestaurantApp> {
       child: GetMaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Restaurant Explorer',
+
         theme: ThemeData(
           useMaterial3: true,
           colorSchemeSeed: const Color(0xFF1857D6),
           scaffoldBackgroundColor: const Color(0xFFFFFBF6),
           appBarTheme: const AppBarTheme(centerTitle: false),
         ),
+
         home: const RestaurantListScreen(),
       ),
     );

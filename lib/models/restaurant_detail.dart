@@ -5,14 +5,14 @@ class RestaurantDetail {
     required this.raw,
     this.description = '',
     this.imageUrl = '',
-    this.images = const <String>[],
+    this.images = const [],
     this.address = '',
     this.phone = '',
     this.supportPhone = '',
     this.subtitle = '',
     this.restaurantCategories = '',
     this.rating = 0,
-    this.items = const <RestaurantMenuItem>[],
+    this.items = const [],
   });
 
   final String id;
@@ -30,8 +30,8 @@ class RestaurantDetail {
   final Map<String, dynamic> raw;
 
   factory RestaurantDetail.fromJson(Map<String, dynamic> json) {
-    final rawImages = <String>[
-      _stringValue(json, const <String>[
+    final rawImages = [
+      _stringValue(json, const [
             'image',
             'imageUrl',
             'coverImage',
@@ -41,8 +41,9 @@ class RestaurantDetail {
           ]) ??
           '',
     ];
+
     rawImages.addAll(
-      _stringListValue(json, const <String>[
+      _stringListValue(json, const [
         'images',
         'gallery',
         'photos',
@@ -51,13 +52,13 @@ class RestaurantDetail {
     );
 
     final filteredImages = rawImages
-        .where((value) => value.trim().isNotEmpty)
+        .where((e) => e.trim().isNotEmpty)
         .toSet()
         .toList(growable: false);
 
     return RestaurantDetail(
       id:
-          _stringValue(json, const <String>[
+          _stringValue(json, const [
             'id',
             'restaurantId',
             'restaurant_id',
@@ -65,34 +66,35 @@ class RestaurantDetail {
             'rid',
           ]) ??
           '0',
+
       name:
-          _stringValue(json, const <String>[
+          _stringValue(json, const [
             'name',
             'restaurantName',
             'title',
             'branchName',
           ]) ??
           'Restaurant',
+
       description:
-          _stringValue(json, const <String>[
+          _stringValue(json, const [
             'description',
             'longDescription',
             'details',
             'summary',
           ]) ??
           '',
+
       imageUrl: filteredImages.isNotEmpty ? filteredImages.first : '',
       images: filteredImages,
+
       address: _addressValue(json) ?? '',
+
       phone:
-          _stringValue(json, const <String>[
-            'phone',
-            'phoneNumber',
-            'telephone',
-          ]) ??
-          '',
+          _stringValue(json, const ['phone', 'phoneNumber', 'telephone']) ?? '',
+
       supportPhone:
-          _stringValue(json, const <String>[
+          _stringValue(json, const [
             'supportPhone',
             'support_phone',
             'supportNumber',
@@ -100,16 +102,18 @@ class RestaurantDetail {
             'customerSupportPhone',
           ]) ??
           '',
+
       subtitle:
-          _stringValue(json, const <String>[
+          _stringValue(json, const [
             'categoryName',
             'cuisineName',
             'type',
             'subtitle',
           ]) ??
           '',
+
       restaurantCategories:
-          _categoriesValue(json, const <String>[
+          _categoriesValue(json, const [
             'restaurantCategories',
             'categories',
             'cuisines',
@@ -117,18 +121,13 @@ class RestaurantDetail {
             'cuisineName',
           ]) ??
           '',
+
       rating:
-          _doubleValue(json, const <String>[
-            'rating',
-            'avgRating',
-            'averageRating',
-          ]) ??
+          _doubleValue(json, const ['rating', 'avgRating', 'averageRating']) ??
           0,
-      items: _menuItemsValue(json, const <String>[
-        'itemList',
-        'items',
-        'menuItems',
-      ]),
+
+      items: _menuItemsValue(json, const ['itemList', 'items', 'menuItems']),
+
       raw: json,
     );
   }
@@ -155,35 +154,28 @@ class RestaurantMenuItem {
 
   factory RestaurantMenuItem.fromJson(Map<String, dynamic> json) {
     return RestaurantMenuItem(
-      id: _stringValue(json, const <String>['id', 'itemId', '_id']) ?? '0',
+      id: _stringValue(json, const ['id', 'itemId', '_id']) ?? '0',
+
       name:
-          _stringValue(json, const <String>['name', 'itemName', 'title']) ??
+          _stringValue(json, const ['name', 'itemName', 'title']) ??
           'Menu Item',
+
       imageUrl:
-          _stringValue(json, const <String>[
-            'defaultImage',
-            'image',
-            'imageUrl',
-          ]) ??
+          _stringValue(json, const ['defaultImage', 'image', 'imageUrl']) ??
           _firstImageFromList(json['images']) ??
           '',
+
       categoryName:
-          _stringValue(json, const <String>['categoryName', 'category']) ?? '',
+          _stringValue(json, const ['categoryName', 'category']) ?? '',
+
       description:
-          _stringValue(json, const <String>[
-            'shortDescription',
-            'description',
-          ]) ??
-          '',
+          _stringValue(json, const ['shortDescription', 'description']) ?? '',
+
       finalPrice:
-          _doubleValue(json, const <String>[
-            'finalPrice',
-            'price',
-            'regularPrice',
-          ]) ??
+          _doubleValue(json, const ['finalPrice', 'price', 'regularPrice']) ??
           0,
-      regularPrice:
-          _doubleValue(json, const <String>['regularPrice', 'price']) ?? 0,
+
+      regularPrice: _doubleValue(json, const ['regularPrice', 'price']) ?? 0,
     );
   }
 }
@@ -191,9 +183,11 @@ class RestaurantMenuItem {
 String? _stringValue(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {
     final value = json[key];
+
     if (value is String && value.trim().isNotEmpty) {
       return value.trim();
     }
+
     if (value is num) {
       return value.toString();
     }
@@ -204,27 +198,26 @@ String? _stringValue(Map<String, dynamic> json, List<String> keys) {
 List<String> _stringListValue(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {
     final value = json[key];
+
     if (value is List) {
       return value
           .whereType<String>()
-          .where((item) => item.trim().isNotEmpty)
+          .where((e) => e.trim().isNotEmpty)
           .toList(growable: false);
     }
   }
-  return const <String>[];
+  return const [];
 }
 
 double? _doubleValue(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {
     final value = json[key];
-    if (value is num) {
-      return value.toDouble();
-    }
+
+    if (value is num) return value.toDouble();
+
     if (value is String) {
       final parsed = double.tryParse(value.trim());
-      if (parsed != null) {
-        return parsed;
-      }
+      if (parsed != null) return parsed;
     }
   }
   return null;
@@ -233,28 +226,34 @@ double? _doubleValue(Map<String, dynamic> json, List<String> keys) {
 String? _categoriesValue(Map<String, dynamic> json, List<String> keys) {
   for (final key in keys) {
     final value = json[key];
+
     if (value is String && value.trim().isNotEmpty) {
       return value.trim();
     }
+
     if (value is List) {
       final labels = <String>[];
+
       for (final item in value) {
         if (item is String && item.trim().isNotEmpty) {
           labels.add(item.trim());
           continue;
         }
+
         if (item is Map<String, dynamic>) {
-          final label = _stringValue(item, const <String>[
+          final label = _stringValue(item, const [
             'name',
             'title',
             'label',
             'categoryName',
           ]);
+
           if (label != null && label.isNotEmpty) {
             labels.add(label);
           }
         }
       }
+
       if (labels.isNotEmpty) {
         return labels.join(', ');
       }
@@ -264,43 +263,39 @@ String? _categoriesValue(Map<String, dynamic> json, List<String> keys) {
 }
 
 String? _addressValue(Map<String, dynamic> json) {
-  final directAddress = _stringValue(json, const <String>[
+  final directAddress = _stringValue(json, const [
     'address',
     'location',
     'branchAddress',
   ]);
+
   if (directAddress != null && directAddress.isNotEmpty) {
     return directAddress;
   }
 
   final address = json['address'];
+
   if (address is Map<String, dynamic>) {
     final parts = <String>[];
-    final areaName = _stringValue(address, const <String>['areaName']);
-    final block = _stringValue(address, const <String>['block']);
-    final street = _stringValue(address, const <String>['street']);
-    final building = _stringValue(address, const <String>['building']);
-    final floor = _stringValue(address, const <String>['floor']);
-    final stateName = _stringValue(address, const <String>['stateName']);
 
-    if (areaName != null) {
-      parts.add(areaName);
-    }
-    if (block != null) {
-      parts.add('Block $block');
-    }
-    if (street != null) {
-      parts.add('Street $street');
-    }
-    if (building != null) {
-      parts.add('Building $building');
-    }
+    final areaName = _stringValue(address, const ['areaName']);
+    final block = _stringValue(address, const ['block']);
+    final street = _stringValue(address, const ['street']);
+    final building = _stringValue(address, const ['building']);
+    final floor = _stringValue(address, const ['floor']);
+    final stateName = _stringValue(address, const ['stateName']);
+
+    if (areaName != null) parts.add(areaName);
+    if (block != null) parts.add('Block $block');
+    if (street != null) parts.add('Street $street');
+    if (building != null) parts.add('Building $building');
+
     if (floor != null && floor.trim().isNotEmpty) {
       parts.add('Floor $floor');
     }
-    if (stateName != null) {
-      parts.add(stateName);
-    }
+
+    if (stateName != null) parts.add(stateName);
+
     if (parts.isNotEmpty) {
       return parts.join(', ');
     }
@@ -315,6 +310,7 @@ List<RestaurantMenuItem> _menuItemsValue(
 ) {
   for (final key in keys) {
     final value = json[key];
+
     if (value is List) {
       return value
           .whereType<Map<String, dynamic>>()
@@ -322,7 +318,7 @@ List<RestaurantMenuItem> _menuItemsValue(
           .toList(growable: false);
     }
   }
-  return const <RestaurantMenuItem>[];
+  return const [];
 }
 
 String? _firstImageFromList(dynamic value) {
@@ -331,17 +327,16 @@ String? _firstImageFromList(dynamic value) {
       if (item is String && item.trim().isNotEmpty) {
         return item.trim();
       }
+
       if (item is Map<String, dynamic>) {
-        final image = _stringValue(item, const <String>[
-          'image',
-          'url',
-          'imageUrl',
-        ]);
+        final image = _stringValue(item, const ['image', 'url', 'imageUrl']);
+
         if (image != null && image.isNotEmpty) {
           return image;
         }
       }
     }
   }
+
   return null;
 }

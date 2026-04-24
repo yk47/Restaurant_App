@@ -5,7 +5,9 @@ class AppException implements Exception {
   final int? statusCode;
 
   @override
-  String toString() => message;
+  String toString() {
+    return message;
+  }
 }
 
 class ExceptionHandler {
@@ -16,6 +18,7 @@ class ExceptionHandler {
       return error;
     }
 
+    // fallback for unknown errors
     return const AppException('Something went wrong. Please try again.');
   }
 }

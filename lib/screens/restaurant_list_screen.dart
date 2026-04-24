@@ -15,6 +15,8 @@ class RestaurantListController extends GetxController {
   RestaurantListController(this.apiClient);
 
   final RestaurantApiClient apiClient;
+
+  // observable state
   final restaurants = <Restaurant>[].obs;
   final isLoading = false.obs;
   final isLoadingMore = false.obs;
@@ -23,13 +25,14 @@ class RestaurantListController extends GetxController {
 
   int _page = 1;
   String _query = '';
-  int _requestToken = 0;
+  int _requestToken = 0; // helps avoid outdated API responses
 
   Future<void> loadRestaurants({required String query}) async {
     _query = query;
     _page = 1;
     hasMore.value = true;
     errorMessage.value = null;
+
     restaurants.clear();
     isLoading.value = true;
 
@@ -41,15 +44,15 @@ class RestaurantListController extends GetxController {
         page: _page,
         perPage: apiClient.config.defaultPerPage,
       );
-      if (requestToken != _requestToken) {
-        return;
-      }
+
+      // ignore if a newer request was triggered
+      if (requestToken != _requestToken) return;
+
       restaurants.assignAll(results);
       hasMore.value = results.length >= apiClient.config.defaultPerPage;
     } catch (error) {
-      if (requestToken != _requestToken) {
-        return;
-      }
+      if (requestToken != _requestToken) return;
+
       errorMessage.value = ExceptionHandler.handle(error).message;
       hasMore.value = false;
     } finally {
@@ -69,21 +72,21 @@ class RestaurantListController extends GetxController {
 
     try {
       final nextPage = _page + 1;
+
       final results = await apiClient.searchRestaurants(
         query: _query,
         page: nextPage,
         perPage: apiClient.config.defaultPerPage,
       );
-      if (requestToken != _requestToken) {
-        return;
-      }
+
+      if (requestToken != _requestToken) return;
+
       _page = nextPage;
       restaurants.addAll(results);
       hasMore.value = results.length >= apiClient.config.defaultPerPage;
     } catch (error) {
-      if (requestToken != _requestToken) {
-        return;
-      }
+      if (requestToken != _requestToken) return;
+
       errorMessage.value = ExceptionHandler.handle(error).message;
     } finally {
       if (requestToken == _requestToken) {
@@ -106,16 +109,21 @@ class _RestaurantListScreenState extends State<RestaurantListScreen> {
   late final TextEditingController _searchController;
   late final ScrollController _scrollController;
   late final RestaurantListController _controller;
-  Timer? _debounce;
+
+  Timer? _debounce; // debounce for search
 
   @override
   void initState() {
     super.initState();
+
     _searchController = TextEditingController();
     _scrollController = ScrollController()..addListener(_handleScroll);
+
     _controller = Get.put(
       RestaurantListController(Get.find<RestaurantApiClient>()),
     );
+
+    // initial load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _controller.loadRestaurants(query: '');
@@ -126,16 +134,21 @@ class _RestaurantListScreenState extends State<RestaurantListScreen> {
   @override
   void dispose() {
     _debounce?.cancel();
+
     _scrollController.removeListener(_handleScroll);
     _scrollController.dispose();
     _searchController.dispose();
+
+    // cleanup controller
     if (Get.isRegistered<RestaurantListController>()) {
       Get.delete<RestaurantListController>(force: true);
     }
+
     super.dispose();
   }
 
   void _handleScroll() {
+    // load more when near bottom
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 240) {
       _controller.loadMore();
@@ -144,6 +157,7 @@ class _RestaurantListScreenState extends State<RestaurantListScreen> {
 
   void _onSearchChanged(String value) {
     _debounce?.cancel();
+
     _debounce = Timer(const Duration(milliseconds: 400), () {
       if (mounted) {
         _controller.loadRestaurants(query: value.trim());
@@ -157,6 +171,7 @@ class _RestaurantListScreenState extends State<RestaurantListScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F8),
+
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(190),
         child: SafeArea(
@@ -172,6 +187,7 @@ class _RestaurantListScreenState extends State<RestaurantListScreen> {
           ),
         ),
       ),
+
       bottomNavigationBar: _BottomNavBar(
         onHomeTap: () {},
         onDiscoverTap: () {},
@@ -179,6 +195,7 @@ class _RestaurantListScreenState extends State<RestaurantListScreen> {
         onChatTap: () {},
         onProfileTap: () {},
       ),
+
       body: SafeArea(
         top: false,
         child: Obx(() {
@@ -190,10 +207,7 @@ class _RestaurantListScreenState extends State<RestaurantListScreen> {
           }
 
           if (errorMessage != null && restaurants.isEmpty) {
-            return ErrorFallbackWidget(
-              message: errorMessage,
-              onRetry: _controller.retry,
-            );
+            return ErrorView(message: errorMessage, onRetry: _controller.retry);
           }
 
           return CustomScrollView(
@@ -208,28 +222,37 @@ class _RestaurantListScreenState extends State<RestaurantListScreen> {
                   actionText: 'See All',
                 ),
               ),
+
               const SliverToBoxAdapter(child: SizedBox(height: 10)),
+
               const SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 18),
                   child: _OfferCard(),
                 ),
               ),
+
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
               const SliverToBoxAdapter(
                 child: _SectionHeader(title: 'Cuisines', actionText: 'See All'),
               ),
+
               const SliverToBoxAdapter(child: SizedBox(height: 10)),
               const SliverToBoxAdapter(child: _CuisineChips()),
+
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
               const SliverToBoxAdapter(
                 child: _SectionHeader(
                   title: 'Popular Restaurants',
                   actionText: 'See All',
                 ),
               ),
+
               const SliverToBoxAdapter(child: SizedBox(height: 10)),
               const SliverToBoxAdapter(child: _FilterRow()),
+
               if (restaurants.isEmpty)
                 const SliverToBoxAdapter(
                   child: Padding(
@@ -244,9 +267,10 @@ class _RestaurantListScreenState extends State<RestaurantListScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                   sliver: SliverList.separated(
                     itemCount: restaurants.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final restaurant = restaurants[index];
+
                       return AnimatedContainer(
                         duration: const Duration(milliseconds: 220),
                         curve: Curves.easeOut,
@@ -269,6 +293,8 @@ class _RestaurantListScreenState extends State<RestaurantListScreen> {
                     },
                   ),
                 ),
+
+              // pagination loader
               SliverToBoxAdapter(
                 child: AnimatedOpacity(
                   opacity: _controller.isLoadingMore.value ? 1 : 0,
@@ -279,6 +305,7 @@ class _RestaurantListScreenState extends State<RestaurantListScreen> {
                   ),
                 ),
               ),
+
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
             ],
           );
@@ -368,7 +395,8 @@ class _TopHeader extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.22),
+                  // fixed: withValues -> withOpacity
+                  color: Colors.white.withOpacity(0.22),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: IconButton(
@@ -447,8 +475,9 @@ class _SectionHeader extends StatelessWidget {
             child: Text(
               title,
               style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 28 / 1.4,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1C1C1C),
               ),
             ),
           ),
@@ -457,8 +486,8 @@ class _SectionHeader extends StatelessWidget {
             child: Text(
               actionText,
               style: const TextStyle(
-                color: Color(0xFF7D70C8),
                 fontWeight: FontWeight.w600,
+                color: Color(0xFF6A53D9),
               ),
             ),
           ),
@@ -474,88 +503,35 @@ class _OfferCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 176),
-      padding: const EdgeInsets.all(12),
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[Color(0xFFFF8B37), Color(0xFFFF6D4D)],
+        ),
       ),
-      child: Row(
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 4, top: 6, bottom: 6),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF2F2FA),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      'Weekend Offers',
-                      style: TextStyle(fontSize: 11),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Get Special Offer',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 22 / 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text.rich(
-                    TextSpan(
-                      children: <InlineSpan>[
-                        TextSpan(
-                          text: 'Up to ',
-                          style: TextStyle(color: Color(0xFF6D6D79)),
-                        ),
-                        TextSpan(
-                          text: '30% OFF',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 24,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6551D5),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                    child: const Text('Book Now'),
-                  ),
-                ],
-              ),
+          Text(
+            'Flash Deal',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
             ),
           ),
-          const SizedBox(width: 10),
-          Container(
-            width: 116,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(100),
-              color: const Color(0xFFFFEFE7),
-            ),
-            child: const Icon(
-              Icons.local_offer_rounded,
-              size: 58,
-              color: Color(0xFFFF8B37),
+          SizedBox(height: 6),
+          Text(
+            'Up to 40% OFF\non selected restaurants',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 22,
+              height: 1.15,
             ),
           ),
         ],
@@ -567,39 +543,45 @@ class _OfferCard extends StatelessWidget {
 class _CuisineChips extends StatelessWidget {
   const _CuisineChips();
 
+  static const List<String> _cuisines = <String>[
+    'All',
+    'Italian',
+    'Burger',
+    'Sushi',
+    'Mexican',
+  ];
+
   @override
   Widget build(BuildContext context) {
-    const cuisines = <String>[
-      'Italian',
-      'Mexican',
-      'Chinese',
-      'Indian',
-      'Arabic',
-    ];
-
     return SizedBox(
       height: 44,
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 18),
         scrollDirection: Axis.horizontal,
+        itemCount: _cuisines.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
+          final bool isSelected = index == 0;
           return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFF24222C),
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(12),
+              color: isSelected ? const Color(0xFF6A53D9) : Colors.white,
+              border: Border.all(
+                color: isSelected
+                    ? const Color(0xFF6A53D9)
+                    : const Color(0xFFE7E6EF),
+              ),
             ),
             child: Text(
-              cuisines[index],
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+              _cuisines[index],
+              style: TextStyle(
+                color: isSelected ? Colors.white : const Color(0xFF2E2E2E),
+                fontWeight: FontWeight.w600,
               ),
             ),
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemCount: cuisines.length,
       ),
     );
   }
@@ -610,58 +592,35 @@ class _FilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 40,
-      child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 18),
-        scrollDirection: Axis.horizontal,
-        children: const <Widget>[
-          _FilterChip(label: 'Cuisins', selected: false, hasArrow: true),
-          SizedBox(width: 8),
-          _FilterChip(label: 'Nearest', selected: true),
-          SizedBox(width: 8),
-          _FilterChip(label: 'Great Offers', selected: true),
-          SizedBox(width: 8),
-          _FilterChip(label: 'Ratings 4.5+', selected: false),
-        ],
-      ),
-    );
-  }
-}
+    Widget filterChip(String label, {bool selected = false}) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: selected ? const Color(0xFFEDE9FF) : Colors.white,
+          border: Border.all(
+            color: selected ? const Color(0xFF6A53D9) : const Color(0xFFE6E6EE),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? const Color(0xFF5644C5) : const Color(0xFF454545),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
 
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
-    required this.label,
-    required this.selected,
-    this.hasArrow = false,
-  });
-
-  final String label;
-  final bool selected;
-  final bool hasArrow;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      decoration: BoxDecoration(
-        color: selected ? const Color(0xFF6551D5) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
       child: Row(
         children: <Widget>[
-          Text(
-            label,
-            style: TextStyle(
-              color: selected ? Colors.white : const Color(0xFF33313B),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          if (hasArrow) ...const <Widget>[
-            SizedBox(width: 4),
-            Icon(Icons.keyboard_arrow_down, size: 16, color: Color(0xFF33313B)),
-          ],
+          filterChip('Nearby', selected: true),
+          const SizedBox(width: 8),
+          filterChip('Top Rated'),
+          const SizedBox(width: 8),
+          filterChip('Fast Delivery'),
         ],
       ),
     );
@@ -685,103 +644,44 @@ class _BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        height: 68,
-        margin: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: const <BoxShadow>[
-            BoxShadow(
-              color: Color(0x11000000),
-              blurRadius: 12,
-              offset: Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            _BottomItem(
-              icon: Icons.home,
-              label: 'Home',
-              active: true,
-              onTap: onHomeTap,
-            ),
-            _BottomItem(
-              icon: Icons.explore_outlined,
-              label: 'Discover',
-              active: false,
-              onTap: onDiscoverTap,
-            ),
-            _BottomItem(
-              icon: Icons.favorite_border,
-              label: 'Wishlist',
-              active: false,
-              onTap: onWishlistTap,
-            ),
-            _BottomItem(
-              icon: Icons.chat_bubble_outline,
-              label: 'Chat',
-              active: false,
-              onTap: onChatTap,
-            ),
-            _BottomItem(
-              icon: Icons.person_outline,
-              label: 'Profile',
-              active: false,
-              onTap: onProfileTap,
-            ),
-          ],
-        ),
+    return BottomAppBar(
+      elevation: 10,
+      color: Colors.white,
+      height: 68,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: <Widget>[
+          _NavItem(icon: Icons.home_rounded, selected: true, onTap: onHomeTap),
+          _NavItem(icon: Icons.explore_outlined, onTap: onDiscoverTap),
+          _NavItem(icon: Icons.favorite_border_rounded, onTap: onWishlistTap),
+          _NavItem(icon: Icons.chat_bubble_outline, onTap: onChatTap),
+          _NavItem(icon: Icons.person_outline_rounded, onTap: onProfileTap),
+        ],
       ),
     );
   }
 }
 
-class _BottomItem extends StatelessWidget {
-  const _BottomItem({
+class _NavItem extends StatelessWidget {
+  const _NavItem({
     required this.icon,
-    required this.label,
-    required this.active,
     required this.onTap,
+    this.selected = false,
   });
 
   final IconData icon;
-  final String label;
-  final bool active;
   final VoidCallback onTap;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(
-              icon,
-              color: active ? const Color(0xFF6551D5) : const Color(0xFF9797A3),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: active
-                    ? const Color(0xFF6551D5)
-                    : const Color(0xFF9797A3),
-              ),
-            ),
-          ],
-        ),
+    return IconButton(
+      onPressed: onTap,
+      icon: Icon(
+        icon,
+        color: selected ? const Color(0xFF6A53D9) : const Color(0xFF8C8C96),
       ),
+      tooltip: 'Navigation item',
     );
   }
 }
